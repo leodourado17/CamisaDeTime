@@ -1,12 +1,21 @@
-package br.com.fiap.virtualvibe.record;
- 
-import java.util.Random;
- 
-public record Modelos(Long id, String nome, Number preco, String descricao) {
-     public Modelos(Long id, String nome, Number preco, String descricao){
-        this.id  = Math.abs (new Random().nextLong());
-        this.nome = nome;
-        this.preco = preco;
-        this.descricao = descricao;
-    }
+package br.com.fiap.tapago.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.Data;
+
+@Data
+@Entity
+public class Modelos {
+
+     @Id @GeneratedValue(strategy = GenerationType.AUTO)
+     private Long id;
+     @NotBlank
+     private String nome;
+     @NotBlank
+     private Double preco;
+     private String descricao;
 }
+

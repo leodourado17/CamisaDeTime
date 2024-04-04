@@ -1,11 +1,12 @@
-package br.com.fiap.virtualvibe.controller;
- 
-import java.util.ArrayList;
+package br.com.fiap.CamisaDeTime.controller;
+
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
 import java.util.List;
- 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,97 +15,70 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
- 
-import br.com.fiap.virtualvibe.record.Modelos;
+import org.springframework.web.server.ResponseStatusException;
+
+import br.com.fiap.tapago.model.Categoria;
+import br.com.fiap.tapago.repository.CategoriaRepository;
+import lombok.extern.slf4j.Slf4j;
  
  
 @RestController
-@RequestMapping("modelo")
+@RequestMapping("modelos")
+@Slf4j
 public class ModelosController {
    
-     Logger log = LoggerFactory.getLogger(getClass());
- 
-     List<Modelos> repository = new ArrayList<>();
- 
-     @GetMapping  
-     public List<Modelos> index(){
-        return repository;
+     @Autowired // Injeção de Dependência - Inversão de Controle
+    ModelosRepository repository;
+
+    @GetMapping
+    public List<Modelos> index() {
+        return repository.findAll();
+    }
     }
  
     @PostMapping
-    public ResponseEntity<Modelos> create(@RequestBody Modelos gameModelos){ //binding
-        log.info("Cadastrando Modelos {}", modelo);
-        repository.add(modelo);
-        return ResponseEntity.status(HttpStatus.CREATED).body(modelo);
+    @ResponseStatus(CREATED)
+    public Modelos create(@RequestBody Modelos modelos) {
+        log.info("Cadastrando modelos {}", modelos);
+        return repository.save(modelos);
     }
-   
-    @GetMapping("{id}")
-    public ResponseEntity<Modelos> show(@PathVariable Long id){
-        log.info("buscando modelo com id {}", id);
-       
-    //     for(Modelos modelo: repository){
-    //         if (modelo.id().equals(id))
-    //             return ResponseEntity.status(HttpStatus.OK).body(modelo);
-    //     }
-
     
-        var categoriaEncontrada = repository
-                                    .stream()
-                                    .filter(c -> c.id().equals(id))
-                                    .findFirst();
+    @GetMapping("{id}")
+    public ResponseEntity<Modelos> show(@PathVariable Long id) {
+        log.info("buscando modelos com id {}", id);
 
-        if(categoriaEncontrada.isEmpty())
-            return ResponseEntity.notFound().build();
+        return repository
+                .findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
 
-        return ResponseEntity.ok(categoriaEncontrada.get());
+    }
 
-     }
 
      @DeleteMapping("{id}")
-     public void destroy(@PathVariable Long id){
-        log.info("apagando categoria {}", id);
-
-         var categoriaEncontrada = repository
-                                    .stream()
-                                    .filter(c -> c.id().equals(id))
-                                    .findFirst();
-
-        if(categoriaEncontrada.isEmpty())
-            return ResponseEntity.notFound().build();
-
-        repository.remove(categoriaEncontrada.get());        
-        
-        return ResponseEntity.noContent().build();
-
-    
+     @ResponseStatus(NO_CONTENT)
+     public void destroy(@PathVariable Long id) {
+        log.info("apagando modelos {}", id);
+        verificarSeModelosExiste(id);
+        repository.deleteById(id);
+    }
+   
     @PutMapping("{id}")
-    public ResponseEntity<Categoria> update(@PathVariable Long id, @RequestBody Categoria categoria){
-        log.info("atualizar categoria {} para {}", id, categoria);
+    public Modelos update(@PathVariable Long id, @RequestBody Modelos modelos) {
+        log.info("atualizar modelos {} para {}", id, modelos);
 
-        // buscar a categoria antiga  - > 404
-        var categoriaEncontrada = getCategoriaById(id);
-
-        if (categoriaEncontrada.isEmpty())
-            return ResponseEntity.not found().build();
-
-        var categoriaAntiga = categoriaEncontrada.get();
-
-        // criar a categoria nova com os dados atualizados
-
-        var categoriaNova = new Categoria(id, categoria.nome(), categoria.icone());
-
-        // apagar a categoria antiga
-
-        repository.remove(categoriaAntiga);
-
-        // add a categoria nova
-
-        repository.add(categoriaNova);
-
-        return ResponseEntity.ok().build();
+        verificarSeModelosExiste(id);
+        modelos.setId(id);
+        return repository.save(modelos);
     }
 
-     }
+    private void verificarSeModelosExiste(Long id) {
+        repository
+                .findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        NOT_FOUND,
+                        "Não existe modelos com o id informado"));
+    }
 
-}
