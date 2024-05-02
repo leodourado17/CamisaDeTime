@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import br.com.fiap.tapago.model.Categoria;
-import br.com.fiap.tapago.repository.CategoriaRepository;
 import lombok.extern.slf4j.Slf4j;
  
  
@@ -34,9 +32,10 @@ public class ModelosController {
 
     @GetMapping
     public List<Modelos> index() {
-        return repository.findAll();
-    }
-    }
+        @PageableDefault(sort = "valor", direction = Direction.DESC) Pageable pageable
+            return repository.findAll(pageable);
+}
+
  
     @PostMapping
     @ResponseStatus(CREATED)
